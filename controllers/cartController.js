@@ -1,13 +1,22 @@
 const Product = require("../models/Product");
 const Cart = require("../models/Cart");
 
-const { STATUS_CODE } = require("../constants/statusCode");
+exports.addProductToCart = async (productData) => {
+  if (!productData || !productData.name) {
+    throw new Error("Product name is required");
+  }
 
-exports.addProductToCart = async (request, response) => {
-  await Product.add(request.body);
-  await Cart.add(request.body.name);
+  const product = await Product.findByName(productData.name);
+  if (!product) {
+    throw new Error(`Product '${productData.name}' not found`);
+  }
 
-  response.status(STATUS_CODE.FOUND).redirect("/products/new");
+  // Upewniamy się, że produkt ma wszystkie wymagane pola
+  if (!product.name || !product.description || !product.price) {
+    throw new Error("Product data is incomplete");
+  }
+
+  await Cart.add(product);
 };
 
 exports.getProductsCount = async () => {

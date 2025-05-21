@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database");
+const Cart = require("./Cart");
 
 const COLLECTION_NAME = "products";
 
@@ -38,8 +39,8 @@ class Product {
 
     try {
       const searchedProduct = await db
-        .collection(COLLECTION_NAME)
-        .findOne({ name });
+          .collection(COLLECTION_NAME)
+          .findOne({ name });
 
       return searchedProduct;
     } catch (error) {
@@ -54,6 +55,7 @@ class Product {
 
     try {
       await db.collection(COLLECTION_NAME).deleteOne({ name });
+      await Cart.deleteProductByName(name);
     } catch (error) {
       console.error("Error occurred while deleting product");
     }
@@ -64,12 +66,12 @@ class Product {
 
     try {
       const lastAddedProduct = await db
-        .collection(COLLECTION_NAME)
-        .find({})
-        .sort({ _id: -1 })
-        .limit(1)
-        .toArray()
-        .then((docs) => docs[0]);
+          .collection(COLLECTION_NAME)
+          .find({})
+          .sort({ _id: -1 })
+          .limit(1)
+          .toArray()
+          .then((docs) => docs[0]);
 
       return lastAddedProduct;
     } catch (error) {

@@ -20,24 +20,21 @@ class Cart {
       return cart;
     } catch (error) {
       console.error("Error occurred while searching cart");
-
       return { items: [] };
     }
   }
 
-  static async add(productName) {
+  static async add(product) {
     const db = getDatabase();
 
     try {
-      const product = await Product.findByName(productName);
-
-      if (!product) {
-        throw Error(`Product '${productName}' not found`);
+      if (!product || !product.name) {
+        throw new Error("Invalid product data");
       }
 
       const cart = await this.getCart();
       const searchedProduct = cart.items.find(
-        (item) => item.product.name === productName
+          (item) => item.product.name === product.name
       );
 
       if (searchedProduct) {
@@ -47,21 +44,20 @@ class Cart {
       }
 
       await db
-        .collection(COLLECTION_NAME)
-        .updateOne({}, { $set: { items: cart.items } });
+          .collection(COLLECTION_NAME)
+          .updateOne({}, { $set: { items: cart.items } }, { upsert: true });
     } catch (error) {
-      console.error("Error occurred while adding product to cart");
+      console.error("Error occurred while adding product to cart:", error.message);
+      throw error;
     }
   }
 
   static async getItems() {
     try {
       const cart = await this.getCart();
-
       return cart.items;
     } catch (error) {
       console.error("Error occurred while searching for products in cart");
-
       return [];
     }
   }
@@ -70,34 +66,26 @@ class Cart {
     try {
       const cart = await this.getCart();
       const productsQuantity = cart.items.reduce(
-        (total, item) => total + item.quantity,
-        0
+          (total, item) => total + item.quantity,
+          0
       );
-
       return productsQuantity;
     } catch (error) {
       console.error("Error occurred while getting quantity of items in cart");
-
       return 0;
     }
   }
 
   static async getTotalPrice() {
-    const db = getDatabase();
-
     try {
       const cart = await this.getCart();
       const totalPrice = cart.items.reduce(
-        (total, item) => total + item.product.price * item.quantity,
-        0
+          (total, item) => total + item.product.price * item.quantity,
+          0
       );
-
       return totalPrice;
     } catch (error) {
-      console.error(
-        "Error occurred while calcualting total price of items in cart"
-      );
-
+      console.error("Error occurred while calculating total price of items in cart");
       return 0;
     }
   }
@@ -107,10 +95,27 @@ class Cart {
 
     try {
       await db
-        .collection(COLLECTION_NAME)
-        .updateOne({}, { $set: { items: [] } });
+          .collection(COLLECTION_NAME)
+          .updateOne({}, { $set: { items: [] } }, { upsert: true });
     } catch (error) {
       console.error("Error occurred while clearing cart");
+    }
+  }
+
+  static async deleteProductByName(productName) {
+    const db = getDatabase();
+
+    try {
+      const cart = await this.getCart();
+      const updatedItems = cart.items.filter(
+          (item) => item.product.name !== productName
+      );
+
+      await db
+          .collection(COLLECTION_NAME)
+          .updateOne({}, { $set: { items: updatedItems } }, { upsert: true });
+    } catch (error) {
+      console.error("Error occurred while deleting product from cart");
     }
   }
 }

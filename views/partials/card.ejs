@@ -1,14 +1,17 @@
 <div class="card">
   <img
-    class="card__image"
-    src="https://source.unsplash.com/random/400x200?product1"
-    alt="Produkt 1"
+          class="card__image"
+          src="https://source.unsplash.com/random/400x200?product1"
+          alt="Produkt 1"
   />
   <h3 class="card__title"><%= product.name %></h3>
   <p class="card__description"><%= product.description %></p>
   <p class="card__price"><%= product.price %></p>
-  <a href="/products/<%= product.name %>">Details</a>
-  <button onclick="deleteProduct('<%= product.name %>')">Delete</button>
+  <div class="card__buttons">
+    <button onclick="addToCart('<%= product.name %>')" class="card__button card__button--add">Add to Cart</button>
+    <a href="/products/<%= product.name %>" class="card__button card__button--details">Details</a>
+    <button onclick="deleteProduct('<%= product.name %>')" class="card__button card__button--delete">Delete</button>
+  </div>
 </div>
 <script>
   function deleteProduct(name) {
@@ -23,6 +26,22 @@
         window.location.reload();
       } else {
         alert("Error while removing product.");
+      }
+    });
+  }
+
+  function addToCart(name) {
+    fetch('/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    }).then((response) => {
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        alert("Error while adding product to cart.");
       }
     });
   }
